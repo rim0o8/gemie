@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ff7a4f" />
+    <meta name="description" content="Gemieと一緒にARアドベンチャー" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+    <title>Gemie</title>
+    <style>
+      :root {
+        --bg-start: #fff2df;
+        --bg-end: #ffe5e0;
+        --bg-deep: #3b2d3a;
+        --panel-bg: rgba(255, 254, 250, 0.83);
+        --panel-border: rgba(149, 109, 98, 0.32);
+        --text-main: #2d2a33;
+        --text-sub: #625b66;
+        --accent-primary: #ff7a4f;
+        --accent-primary-2: #f04f78;
+        --accent-success: #22c55e;
+        --accent-error: #e11d48;
+        --shadow-soft: 0 12px 32px rgba(79, 38, 35, 0.15);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --radius-sm: 8px;
+        --cat-food: #ff8c42;
+        --cat-scenery: #38bdf8;
+        --cat-object: #a855f7;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 15% 15%, var(--bg-start), transparent 45%),
+          radial-gradient(circle at 85% 20%, #ffd5c6, transparent 42%),
+          linear-gradient(155deg, var(--bg-start), var(--bg-end) 42%, #ffd1dc 100%);
+        color: var(--text-main);
+        font-family: 'Outfit', 'Avenir Next', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', sans-serif;
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* ===== Menu Screen ===== */
+
+      #menu-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 0;
+        background: #0e0e12;
+        overflow: hidden;
+      }
+
+      /* Ambient mesh gradient */
+      #menu-screen::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 60% 50% at 20% 20%, rgba(255, 180, 80, 0.18), transparent),
+          radial-gradient(ellipse 50% 60% at 80% 30%, rgba(240, 79, 120, 0.14), transparent),
+          radial-gradient(ellipse 70% 50% at 50% 80%, rgba(120, 80, 255, 0.10), transparent);
+        pointer-events: none;
+      }
+
+      /* Subtle noise texture overlay */
+      #menu-screen::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0.03;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        pointer-events: none;
+      }
+
+      #menu-inner {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        padding: 0 24px;
+        width: 100%;
+        max-width: 380px;
+      }
+
+      /* --- Avatar --- */
+      #gemie-menu-avatar {
+        width: min(180px, 48vw);
+        aspect-ratio: 1 / 1;
+        position: relative;
+        border-radius: 50%;
+        overflow: visible;
+      }
+
+      #gemie-menu-avatar .avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        border-radius: 50%;
+        position: relative;
+        z-index: 2;
+        box-shadow:
+          0 0 40px rgba(255, 180, 80, 0.25),
+          0 20px 40px rgba(0, 0, 0, 0.4);
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        animation: gemieFloat 2400ms ease-in-out infinite;
+      }
+
+      #gemie-menu-avatar::after {
+        content: '';
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        animation: pulseRing 2.5s ease-out infinite;
+        z-index: 1;
+      }
+
+      @keyframes pulseRing {
+        0% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        100% {
+          transform: scale(1.3);
+          opacity: 0;
+        }
+      }
+
+      /* --- Title --- */
+      #menu-title {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      #menu-title .main-title {
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #fff 0%, #ffd6a0 40%, #ffb347 70%, #fff 100%);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: titleShimmer 4s ease-in-out infinite;
+        line-height: 1.1;
+      }
+
+      #menu-title .tagline {
+        font-size: 0.82rem;
+        font-weight: 400;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.08em;
+      }
+
+      @keyframes titleShimmer {
+        0%,
+        100% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+      }
+
+      /* --- Buttons --- */
+      #menu-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+      }
+
+      #menu-screen .ar-button-container {
+        width: 100%;
+      }
+
+      #menu-screen .ar-button-container button,
+      #ar-button-placeholder {
+        width: 100%;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #ff7a4f, #f04f78);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        padding: 16px 24px;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(240, 79, 120, 0.3);
+        position: relative;
+        overflow: hidden;
+        transition:
+          transform 150ms ease,
+          box-shadow 150ms ease;
+        letter-spacing: 0.02em;
+      }
+
+      #menu-screen .ar-button-container button:hover,
+      #ar-button-placeholder:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(240, 79, 120, 0.4);
+      }
+
+      #menu-screen .ar-button-container button::after,
+      #ar-button-placeholder::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes shimmer {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      #menu-secondary-actions {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+      }
+
+      #memory-recall-btn,
+      #gemie-collection-btn {
+        flex: 1;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(12px);
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 600;
+        font-size: 0.88rem;
+        padding: 14px 12px;
+        cursor: pointer;
+        transition:
+          background 150ms ease,
+          transform 150ms ease;
+        position: relative;
+        z-index: 1;
+      }
+
+      #memory-recall-btn:hover,
+      #gemie-collection-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-1px);
+      }
+
+      #memory-recall-btn:active,
+      #gemie-collection-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* ===== Gemie Collection (図鑑) ===== */
+
+      #gemie-collection-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        flex-direction: column;
+        background: linear-gradient(160deg, #0c1929 0%, #152238 30%, #1a2d4a 60%, #0a1220 100%);
+        overflow: hidden;
+      }
+
+      #gemie-collection-overlay.visible {
+        display: flex;
+        animation: recallFadeIn 500ms ease-out;
+      }
+
+      #gemie-collection-header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 8px;
+        flex-shrink: 0;
+      }
+
+      #gemie-collection-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.9);
+        letter-spacing: 0.04em;
+      }
+
+      #collection-close-btn {
+        border: none;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 8px 18px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 150ms ease;
+      }
+
+      #collection-close-btn:active {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      #gemie-collection-grid {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 12px 16px;
+        overflow-y: auto;
+        align-content: start;
+      }
+
+      .gemie-collection-item {
+        aspect-ratio: 1 / 1;
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: transform 150ms ease;
+        position: relative;
+      }
+
+      .gemie-collection-item:active {
+        transform: scale(0.95);
+      }
+
+      .gemie-collection-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .gemie-collection-item .emotion-badge {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 999px;
+        backdrop-filter: blur(4px);
+      }
+
+      #gemie-collection-empty {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.95rem;
+        line-height: 1.8;
+      }
+
+      #gemie-collection-empty.visible {
+        display: flex;
+      }
+
+      /* Gemie Detail Modal */
+
+      #gemie-detail-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 250;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #gemie-detail-modal.visible {
+        display: flex;
+        animation: recallFadeIn 300ms ease-out;
+      }
+
+      #gemie-detail-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(6px);
+      }
+
+      #gemie-detail-content {
+        position: relative;
+        z-index: 1;
+        width: min(360px, 90vw);
+        background: linear-gradient(160deg, #1e293b, #0f172a);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      #gemie-detail-image {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        display: block;
+      }
+
+      #gemie-detail-info {
+        padding: 16px;
+      }
+
+      .gemie-detail-tag {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        margin-bottom: 8px;
+      }
+
+      #gemie-detail-prompt {
+        font-size: 0.92rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.5;
+        margin-bottom: 6px;
+      }
+
+      #gemie-detail-date {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      #gemie-detail-close-btn {
+        display: block;
+        width: 100%;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.7);
+        font-weight: 600;
+        font-size: 0.88rem;
+        padding: 14px;
+        cursor: pointer;
+        transition: background 150ms ease;
+      }
+
+      #gemie-detail-close-btn:active {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      /* ===== AR Overlay ===== */
+
+      #ar-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        pointer-events: none;
+        display: none;
+        grid-template-rows: auto auto auto 1fr auto;
+        gap: 8px;
+        padding: 12px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+      }
+
+      .panel {
+        background: var(--panel-bg);
+        border: 1px solid var(--panel-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(10px);
+      }
+
+      /* ===== Step 3: Quest Card Redesign ===== */
+
+      #quest-panel {
+        padding: 14px 16px;
+        margin: 0 auto;
+        max-width: 460px;
+        width: 100%;
+        transition:
+          transform 200ms ease,
+          opacity 200ms ease;
+      }
+
+      #quest-panel.visible-quest {
+        animation: questSlideIn 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      #quest-panel.hidden {
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+      }
+
+      @keyframes questSlideIn {
+        0% {
+          transform: translateY(-20px) scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .quest-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .quest-category-icon {
+        font-size: 1.3rem;
+      }
+
+      #quest-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.09em;
+        color: #a855f7;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .quest-category-badge {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin-left: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .quest-category-badge.cat-food {
+        background: rgba(255, 140, 66, 0.15);
+        color: var(--cat-food);
+      }
+
+      .quest-category-badge.cat-scenery {
+        background: rgba(56, 189, 248, 0.15);
+        color: var(--cat-scenery);
+      }
+
+      .quest-category-badge.cat-object {
+        background: rgba(168, 85, 247, 0.15);
+        color: var(--cat-object);
+      }
+
+      #quest-description {
+        font-size: 1.14rem;
+        line-height: 1.48;
+        color: var(--text-main);
+      }
+
+      #quest-panel.shake {
+        animation: shakePanel 400ms ease;
+      }
+
+      @keyframes shakePanel {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        15% {
+          transform: translateX(-8px);
+        }
+        30% {
+          transform: translateX(6px);
+        }
+        45% {
+          transform: translateX(-5px);
+        }
+        60% {
+          transform: translateX(4px);
+        }
+        75% {
+          transform: translateX(-2px);
+        }
+      }
+
+      /* ===== Step 7: Progress Track ===== */
+
+      #progress-track {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        padding: 4px 0;
+      }
+
+      .progress-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.1);
+        transition:
+          background 300ms ease,
+          box-shadow 300ms ease,
+          transform 300ms ease;
+      }
+
+      .progress-dot.completed {
+        background: var(--accent-success);
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+      }
+
+      .progress-dot.current {
+        background: var(--accent-primary);
+        box-shadow: 0 0 8px rgba(255, 122, 79, 0.5);
+        animation: dotPulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes dotPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+        }
+      }
+
+      /* ===== Status Panel ===== */
+
+      #status-panel {
+        text-align: center;
+        min-height: 42px;
+      }
+
+      #status-message {
+        display: none;
+        background: rgba(255, 250, 248, 0.9);
+        color: var(--text-main);
+        border: 1px solid rgba(122, 80, 75, 0.15);
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        font-size: 0.88rem;
+      }
+
+      #status-message.visible {
+        display: inline-block;
+      }
+
+      #status-message.success {
+        color: #15803d;
+      }
+
+      #status-message.error {
+        color: #be123c;
+      }
+
+      /* ===== Step 6b: Loading Spinner Dual Ring ===== */
+
+      #loading-spinner {
+        display: none;
+        width: 36px;
+        height: 36px;
+        position: relative;
+        margin: 8px auto;
+      }
+
+      #loading-spinner.visible {
+        display: block;
+      }
+
+      #loading-spinner::before,
+      #loading-spinner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 3px solid transparent;
+      }
+
+      #loading-spinner::before {
+        border-top-color: #ec4899;
+        border-right-color: #ec4899;
+        animation: spin 0.8s linear infinite;
+      }
+
+      #loading-spinner::after {
+        border-bottom-color: #a855f7;
+        border-left-color: #a855f7;
+        animation: spin 1.2s linear infinite reverse;
+      }
+
+      /* ===== Step 9: Error Banner ===== */
+
+      #error-banner {
+        justify-self: center;
+        width: min(420px, 94vw);
+        padding: 14px 16px;
+        background: rgba(255, 244, 244, 0.95);
+        border-color: rgba(190, 24, 93, 0.35);
+        pointer-events: all;
+        animation: slideInBanner 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      #error-banner.hidden {
+        display: none;
+      }
+
+      @keyframes slideInBanner {
+        0% {
+          transform: translateY(-20px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      #error-message {
+        color: #9f1239;
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .error-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .small-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 100ms ease;
+      }
+
+      .small-btn:active {
+        transform: scale(0.95);
+      }
+
+      #retry-btn {
+        background: linear-gradient(135deg, #fb7185, #f97316);
+        color: #fff;
+      }
+
+      #back-menu-btn {
+        background: rgba(224, 221, 229, 0.9);
+        color: #37303f;
+      }
+
+      /* ===== Gemie AR Avatar ===== */
+
+      #gemie-ar-avatar {
+        position: fixed;
+        bottom: 100px;
+        left: 16px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        z-index: 110;
+        pointer-events: none;
+        box-shadow:
+          0 0 20px rgba(255, 107, 107, 0.3),
+          0 8px 20px rgba(240, 79, 120, 0.2);
+        border: 3px solid rgba(255, 255, 255, 0.7);
+        background: var(--panel-bg);
+        transition: opacity 300ms ease;
+      }
+
+      #gemie-ar-avatar.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #gemie-ar-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: opacity 400ms ease;
+      }
+
+      #gemie-ar-avatar-img.fade {
+        opacity: 0;
+      }
+
+      /* ===== AR Back Button ===== */
+
+      #ar-back-btn {
+        position: fixed;
+        top: max(12px, env(safe-area-inset-top));
+        left: 12px;
+        z-index: 110;
+        border: none;
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(8px);
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 8px 16px;
+        cursor: pointer;
+        pointer-events: all;
+        transition: background 150ms ease, transform 150ms ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      #ar-back-btn:active {
+        background: rgba(0, 0, 0, 0.5);
+        transform: scale(0.95);
+      }
+
+      /* ===== Step 4: Capture Button ===== */
+
+      #action-area {
+        align-self: end;
+        justify-self: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        pointer-events: all;
+      }
+
+      #capture-btn {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.78);
+        background: linear-gradient(135deg, #fb7185, #f97316);
+        color: #fff;
+        font-size: 1.8rem;
+        cursor: pointer;
+        box-shadow: 0 14px 26px rgba(249, 115, 22, 0.35);
+        transition:
+          transform 120ms ease,
+          box-shadow 120ms ease;
+        position: relative;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #capture-btn:not(:disabled) {
+        animation: captureReady 2s ease-in-out infinite;
+      }
+
+      @keyframes captureReady {
+        0%,
+        100% {
+          box-shadow:
+            0 14px 26px rgba(249, 115, 22, 0.35),
+            0 0 0 0 rgba(251, 113, 133, 0.4);
+        }
+        50% {
+          box-shadow:
+            0 14px 26px rgba(249, 115, 22, 0.35),
+            0 0 0 12px rgba(251, 113, 133, 0);
+        }
+      }
+
+      #capture-btn:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+
+      #capture-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        animation: none;
+      }
+
+      #capture-btn.capturing {
+        animation: captureFlash 300ms ease-out !important;
+      }
+
+      @keyframes captureFlash {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+        }
+        50% {
+          transform: scale(1.15);
+          box-shadow: 0 0 30px 10px rgba(255, 255, 255, 0.6);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 14px 26px rgba(249, 115, 22, 0.35);
+        }
+      }
+
+      #capture-label {
+        color: #fff;
+        font-size: 0.82rem;
+        text-shadow: 0 2px 8px rgba(55, 48, 63, 0.4);
+      }
+
+      /* ===== Step 5: Success/Failure Flash ===== */
+
+      #success-flash {
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        pointer-events: none;
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0));
+        opacity: 0;
+      }
+
+      #success-flash.active {
+        animation: successFlashAnim 1200ms ease-out forwards;
+      }
+
+      @keyframes successFlashAnim {
+        0% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+
+      /* ===== Animations ===== */
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes gemieFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+
+      /* ===== Memory Recall Fullscreen ===== */
+
+      #memory-recall-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 200;
+        flex-direction: column;
+        background: linear-gradient(160deg, #1a1025 0%, #2d1b4e 30%, #1e1133 60%, #0f0a1a 100%);
+        overflow: hidden;
+      }
+
+      #memory-recall-overlay.visible {
+        display: flex;
+        animation: recallFadeIn 500ms ease-out;
+      }
+
+      @keyframes recallFadeIn {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      /* Ambient glow orbs */
+      #memory-recall-overlay::before,
+      #memory-recall-overlay::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.3;
+        pointer-events: none;
+        animation: recallOrb 8s ease-in-out infinite;
+      }
+
+      #memory-recall-overlay::before {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #a78bfa, transparent 70%);
+        top: -60px;
+        right: -40px;
+      }
+
+      #memory-recall-overlay::after {
+        width: 250px;
+        height: 250px;
+        background: radial-gradient(circle, #f472b6, transparent 70%);
+        bottom: -40px;
+        left: -30px;
+        animation-delay: -4s;
+        animation-direction: reverse;
+      }
+
+      @keyframes recallOrb {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(20px, -15px) scale(1.1);
+        }
+        66% {
+          transform: translate(-15px, 10px) scale(0.95);
+        }
+      }
+
+      /* Header */
+      #memory-recall-header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 8px;
+        flex-shrink: 0;
+      }
+
+      #memory-recall-header h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.9);
+        letter-spacing: 0.04em;
+      }
+
+      #recall-close-btn {
+        border: none;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 600;
+        font-size: 0.82rem;
+        padding: 8px 18px;
+        cursor: pointer;
+        backdrop-filter: blur(4px);
+        transition: background 150ms ease;
+      }
+
+      #recall-close-btn:active {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      /* Image area — takes up the main space */
+      #memory-recall-image-area {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        min-height: 0;
+      }
+
+      #memory-recall-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.5),
+          0 0 80px rgba(168, 139, 250, 0.1);
+        transition: opacity 400ms ease;
+      }
+
+      #memory-recall-image:not([src]),
+      #memory-recall-image[src=''] {
+        opacity: 0;
+      }
+
+      #memory-recall-loading {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 40px;
+      }
+
+      #memory-recall-loading.visible {
+        display: block;
+      }
+
+      #memory-recall-loading::before,
+      #memory-recall-loading::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 3px solid transparent;
+      }
+
+      #memory-recall-loading::before {
+        border-top-color: #c084fc;
+        border-right-color: #c084fc;
+        animation: spin 0.8s linear infinite;
+      }
+
+      #memory-recall-loading::after {
+        border-bottom-color: #f472b6;
+        border-left-color: #f472b6;
+        animation: spin 1.2s linear infinite reverse;
+      }
+
+      /* Bottom panel — caption + voice state */
+      #memory-recall-bottom {
+        position: relative;
+        z-index: 1;
+        flex-shrink: 0;
+        padding: 12px 24px 28px;
+        padding-bottom: max(28px, env(safe-area-inset-bottom));
+        background: linear-gradient(to top, rgba(15, 10, 26, 0.85), transparent);
+        text-align: center;
+      }
+
+      #memory-recall-caption {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.88);
+        line-height: 1.6;
+        margin-bottom: 8px;
+        min-height: 1.6em;
+      }
+
+      .recall-voice-status {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.45);
+        min-height: 1.4em;
+        transition: color 300ms ease;
+      }
+
+      .recall-voice-status.speaking {
+        color: #fb923c;
+        font-weight: 600;
+      }
+
+      .recall-voice-status.listening {
+        color: #c084fc;
+        font-weight: 600;
+        animation: listenPulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes listenPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      @media (max-width: 420px) {
+        #quest-description {
+          font-size: 1.03rem;
+        }
+
+        #menu-title .main-title {
+          font-size: 2.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="menu-screen">
+      <div id="menu-inner">
+        <div id="gemie-menu-avatar">
+          <img class="avatar-img" src="/gemie.png" alt="Gemie" />
+        </div>
+        <div id="menu-title">
+          <div class="main-title">Gemie</div>
+          <div class="tagline">きみの毎日に、ちいさな冒険を</div>
+        </div>
+        <div id="menu-actions">
+          <div class="ar-button-container" id="ar-button-container">
+            <button id="ar-button-placeholder" disabled>思い出をつくる</button>
+          </div>
+          <div id="menu-secondary-actions">
+            <button id="memory-recall-btn" type="button">思い出</button>
+            <button id="gemie-collection-btn" type="button">図鑑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gemie Collection (図鑑) Fullscreen -->
+    <div id="gemie-collection-overlay">
+      <div id="gemie-collection-header">
+        <h2>Gemie図鑑</h2>
+        <button id="collection-close-btn" type="button">とじる</button>
+      </div>
+      <div id="gemie-collection-grid"></div>
+      <div id="gemie-collection-empty">
+        <p>まだGemieがいません。<br />クエストをクリアして集めよう！</p>
+      </div>
+    </div>
+
+    <!-- Gemie Collection Detail Modal -->
+    <div id="gemie-detail-modal">
+      <div id="gemie-detail-backdrop"></div>
+      <div id="gemie-detail-content">
+        <img id="gemie-detail-image" alt="Gemie" />
+        <div id="gemie-detail-info">
+          <span id="gemie-detail-emotion" class="gemie-detail-tag"></span>
+          <p id="gemie-detail-prompt"></p>
+          <p id="gemie-detail-date"></p>
+        </div>
+        <button id="gemie-detail-close-btn" type="button">とじる</button>
+      </div>
+    </div>
+
+    <!-- Memory Recall Fullscreen -->
+    <div id="memory-recall-overlay">
+      <div id="memory-recall-header">
+        <h2>gemie君との思い出</h2>
+        <button id="recall-close-btn" type="button">おしまい</button>
+      </div>
+      <div id="memory-recall-image-area">
+        <img id="memory-recall-image" alt="gemie君との思い出イラスト" />
+        <div id="memory-recall-loading"></div>
+      </div>
+      <div id="memory-recall-bottom">
+        <p id="memory-recall-caption"></p>
+        <p id="memory-recall-voice-status" class="recall-voice-status"></p>
+      </div>
+    </div>
+
+    <div id="success-flash"></div>
+
+    <div id="ar-overlay">
+      <button id="ar-back-btn" type="button">← もどる</button>
+      <div id="quest-panel" class="panel hidden">
+        <div class="quest-header">
+          <span class="quest-category-icon" id="quest-category-icon">✨</span>
+          <span id="quest-title">ジェミー君の要望</span>
+          <span class="quest-category-badge" id="quest-category-badge"></span>
+        </div>
+        <div id="quest-description">--</div>
+      </div>
+
+      <div id="progress-track"></div>
+
+      <div id="status-panel">
+        <span id="status-message"></span>
+        <div id="loading-spinner"></div>
+      </div>
+
+      <div id="error-banner" class="panel hidden">
+        <p id="error-message">通信に失敗しました。</p>
+        <div class="error-actions">
+          <button id="back-menu-btn" class="small-btn" type="button">メニューへ戻る</button>
+          <button id="retry-btn" class="small-btn" type="button">再試行</button>
+        </div>
+      </div>
+
+      <div id="gemie-ar-avatar" class="hidden">
+        <img id="gemie-ar-avatar-img" src="/gemie.png" alt="gemie" />
+      </div>
+
+      <div id="action-area">
+        <button id="capture-btn" disabled>⚡</button>
+        <span id="capture-label">見せる</span>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

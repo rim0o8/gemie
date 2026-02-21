@@ -1,0 +1,45 @@
+{
+  "name": "reality-quest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "dev:server": "bun --watch server/src/index.ts",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host",
+    "start:server": "bun server/src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "test": "vitest run",
+    "test:live-llm": "LIVE_LLM_TEST=1 vitest run tests/liveLLM.integration.test.ts",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "check": "bun run format:check && bun run lint && bun run typecheck && bun run test:coverage"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "postgres": "^3.4.8",
+    "three": "^0.172.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@types/three": "^0.172.0",
+    "@vitest/coverage-v8": "^3.0.5",
+    "esbuild": "0.24.2",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "prettier": "^3.5.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0",
+    "vite": "^6.1.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^3.0.5"
+  }
+}

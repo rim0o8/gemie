@@ -1,0 +1,24 @@
+{
+  "name": "gemini-live-play",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "start:force": "SKIP_DOCTOR=1 bun src/index.ts",
+    "doctor": "bun src/doctorCli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@google/genai": "^1.41.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "@vitest/coverage-v8": "3.2.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
